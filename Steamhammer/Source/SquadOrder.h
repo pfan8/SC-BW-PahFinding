@@ -4,6 +4,7 @@
 
 namespace UAlbertaBot
 {
+	typedef std::vector<BWAPI::Position> SPosition;
 
 namespace SquadOrderTypes
 {
@@ -18,6 +19,7 @@ namespace SquadOrderTypes
 		Drop,      // go drop on the enemy (Drop squad)
 		Harass,    // harass the enemy
 		KamikazeAttack,    // attacks the enemy with much higher aggression, ignoring air units
+		SneakAttack, // detour to sneak enemy main base
 	};
 }
 
@@ -25,7 +27,9 @@ class SquadOrder
 {
     size_t              _type;
     int                 _radius;
-    BWAPI::Position     _position;
+    BWAPI::Position     _dest_position;
+	SPosition			_sneak_positions;
+	int					_current_sneak_index;
     std::string         _status;
 
 public:
@@ -36,12 +40,21 @@ public:
 	{
 	}
 
-	SquadOrder(int type, BWAPI::Position position, int radius, std::string status = "Default") 
+	SquadOrder(int type, BWAPI::Position dest_position, int radius, std::string status = "Default")
 		: _type(type)
-		, _position(position)
+		, _dest_position(dest_position)
 		, _radius(radius) 
 		, _status(status)
 	{
+		if (type == SquadOrderTypes::SneakAttack)
+		{
+			_current_sneak_index = 0;
+		}
+	}
+
+	void setSneakPostions(SPosition &sneak_positions)
+	{
+		_sneak_positions = sneak_positions;
 	}
 
 	const std::string & getStatus() const 
@@ -51,7 +64,7 @@ public:
 
     const BWAPI::Position & getPosition() const
     {
-        return _position;
+        return _dest_position;
     }
 
     const int & getRadius() const
@@ -101,6 +114,18 @@ public:
 	{
 		return
 			_type == SquadOrderTypes::Attack;
+	}
+
+	BWAPI::Position getSneakPosition()
+	{
+		return _sneak_positions[_current_sneak_index];
+	}
+
+	void runNextSneakPos()
+	{
+		if (_sneak_positions.size() == 0) return;
+		_current_sneak_index = _current_sneak_index >= _sneak_positions.size()-1 ? _sneak_positions.size()-1 : ++_current_sneak_index;
+		//_current_sneak_index++;
 	}
 
 };

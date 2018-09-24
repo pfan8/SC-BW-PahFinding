@@ -28,6 +28,7 @@ class CombatCommander
 	void			updateReconSquad();
 	void            updateAttackSquads();
     void            updateDropSquads();
+	void			updateSneakSquads();
 	void            updateIdleSquad();
     void            updateKamikazeSquad();
     void            updateDefuseSquads();
@@ -57,6 +58,8 @@ class CombatCommander
 	BWAPI::Position getReconLocation() const;
 	BWAPI::Position getAttackLocation(const Squad * squad);
 	BWAPI::Position getDropLocation(const Squad & squad);
+	BWAPI::Position getSneakLocation(const Squad & squad);
+	SPosition		getSneakPath();
 	BWAPI::Position	getDefenseLocation();
 
     void            initializeSquads();

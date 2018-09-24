@@ -80,6 +80,7 @@ public:
             double                  getProductionSaturation(BWAPI::UnitType producer) const;
 
 			bool					dropIsPlanned() const;
+			bool					sneakIsPlanned() const;
 			bool					hasDropTech();
 };
 

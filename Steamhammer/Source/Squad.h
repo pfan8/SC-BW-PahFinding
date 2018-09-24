@@ -69,6 +69,7 @@ class Squad
 	bool			needsToRegroup();
 
 	void			loadTransport();
+	void			detour();
 	void			stimIfNeeded();
 
 public:

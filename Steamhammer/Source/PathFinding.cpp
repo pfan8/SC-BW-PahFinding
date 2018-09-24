@@ -143,3 +143,55 @@ std::vector<const BWEM::ChokePoint *> PathFinding::GetChokePointPathAvoidingUnde
 
     return {};
 }
+
+std::vector<const BWAPI::Position> UAlbertaBot::PathFinding::GetChokePointPathFarthest(BWAPI::Position start, BWAPI::Position target)
+{
+	std::vector<const BWAPI::Position> result_path;
+	double mapWidth = bwemMap.Size().x;
+	double mapHeight = bwemMap.Size().y;
+	double hdist = std::abs(start.x - target.x);
+	double vdist = std::abs(start.y - target.y);
+	const std::set<BWTA::Chokepoint*>& cPoints = BWTA::getChokepoints();
+	// choose the direction to go
+	if (vdist < hdist)
+	{
+		const BWEM::Area * start_area = bwemMap.GetArea(BWAPI::TilePosition(start));
+		bwem_assert(start_area != nullptr);
+		double end_y = (target.y - 0 > mapHeight - target.y) ? 0. : mapHeight;
+		BWAPI::Position vend_position(target.x, end_y);
+		double min_distance = GetGroundDistance(target, vend_position);
+		BWTA::Chokepoint * target_choke;
+		for (BWTA::Chokepoint * choke : cPoints)
+		{
+			double distance = GetGroundDistance(choke->getCenter(), vend_position);
+			if (distance < min_distance)
+			{
+				target_choke = choke;
+				min_distance = distance;
+			}
+		}
+		result_path.push_back(target_choke->getCenter());
+	}
+	else
+	{
+		const BWEM::Area * start_area = bwemMap.GetArea(BWAPI::TilePosition(start));
+		bwem_assert(start_area != nullptr);
+		double end_x = (target.x - 0 > mapWidth - target.x) ? 0. : mapWidth;
+		BWAPI::Position hend_position(end_x, target.y);
+		double min_distance = GetGroundDistance(target, hend_position);
+		BWTA::Chokepoint * target_choke;
+		for (BWTA::Chokepoint * choke : cPoints)
+		{
+			double distance = GetGroundDistance(choke->getCenter(), hend_position);
+			if (distance < min_distance)
+			{
+				target_choke = choke;
+				min_distance = distance;
+			}
+		}
+		result_path.push_back(target_choke->getCenter());
+	}
+	//Log::Log().Get() << "sneak path here4" << std::endl;
+	result_path.push_back(target);
+	return result_path;
+}

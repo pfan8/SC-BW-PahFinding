@@ -19,7 +19,8 @@ const size_t HarassPriority = 3;
 const size_t BaseDefensePriority = 4;
 const size_t ScoutDefensePriority = 5;
 const size_t DropPriority = 6;         // don't steal from Drop squad for Defense squad
-const size_t KamikazePriority = 7;
+const size_t SneakPriority = 7;
+const size_t KamikazePriority = 8;
 
 // The attack squads.
 const int AttackRadius = 800;
@@ -88,6 +89,12 @@ void CombatCommander::initializeSquads()
 		_squadData.addSquad(Squad("Drop", doDrop, DropPriority));
     }
 
+	if (StrategyManager::Instance().sneakIsPlanned())
+	{
+		SquadOrder doSneak(SquadOrderTypes::Hold, ourBasePosition, AttackRadius, "Wait for sneak");
+		_squadData.addSquad(Squad("Sneak", doSneak, SneakPriority));
+	}
+
     _initialized = true;
 }
 
@@ -106,6 +113,7 @@ void CombatCommander::update(const BWAPI::Unitset & combatUnits)
 	{
 		updateIdleSquad();
 		updateDropSquads();
+		updateSneakSquads();
 		updateScoutDefenseSquad();
 		updateBaseDefenseSquads();
 		updateHarassSquads();
@@ -913,6 +921,76 @@ void CombatCommander::updateDropSquads()
             }
         }
     }
+}
+
+void CombatCommander::updateSneakSquads()
+{
+	if (!_squadData.squadExists("Sneak"))
+	{
+		return;
+	}
+
+	Squad & sneakSquad = _squadData.getSquad("Sneak");
+
+	// The squad is initialized with a Hold order.
+	// There are 3 phases, and in each phase the squad is given a different order:
+	// Collect units (Hold); load the transport (Load); go drop (Drop).
+
+	if (sneakSquad.getSquadOrder().getType() == SquadOrderTypes::SneakAttack)
+	{
+		// If it has already been told to Drop, we issue a new drop order in case the
+		// target has changed.
+		/* TODO not yet supported by the drop code
+		SquadOrder dropOrder = SquadOrder(SquadOrderTypes::Drop, getDropLocation(sneakSquad), 300, "Go drop!");
+		sneakSquad.setSquadOrder(dropOrder);
+		*/
+		return;
+	}
+
+	// If we get here, we haven't been ordered to Drop yet.
+
+	// What units do we have, what units do we need?
+	std::vector<BWAPI::Unit> sneakGroup;
+	int sneaksRemaining = 4; 
+	const auto & sneakUnits = sneakSquad.getUnits();
+
+	for (const auto unit : sneakUnits)
+	{
+		if (unit->exists())
+		{
+			if (unit->canAttack())
+			{
+				sneakGroup.push_back(unit);
+			}
+		}
+	}
+	bool unitExists = true;
+	for (const auto unit : sneakGroup)
+	{
+		if (unit)
+		{
+			sneaksRemaining--;
+		}
+	}
+	if (unitExists && sneaksRemaining <= 0)
+	{
+		SquadOrder sneakOrder = SquadOrder(SquadOrderTypes::SneakAttack, getSneakLocation(sneakSquad), 300, "Go sneak!");
+		sneakOrder.setSneakPostions(getSneakPath());
+		sneakSquad.setSquadOrder(sneakOrder);
+	}
+	else
+	{
+		// The sneak squad is not complete. Look for more units.
+		for (const auto unit : _combatUnits)
+		{
+			//BWAPI::Broodwar->printf("unittype: %s", unit->getType());
+			if (unit->getType() == BWAPI::UnitTypes::Protoss_Dragoon 
+				&& _squadData.canAssignUnitToSquad(unit, sneakSquad))
+			{
+				_squadData.assignUnitToSquad(unit, sneakSquad);
+			}
+		}
+	}
 }
 
 void CombatCommander::updateScoutDefenseSquad() 
@@ -1951,6 +2029,12 @@ BWAPI::Position CombatCommander::getDropLocation(const Squad & squad)
 	return MapGrid::Instance().getLeastExplored(false);
 }
 
+// Choose a point of attack for the given sneak squad.
+BWAPI::Position CombatCommander::getSneakLocation(const Squad & squad)
+{
+	return getDropLocation(squad);
+}
+
 // We're being defensive. Get the location to defend.
 BWAPI::Position CombatCommander::getDefenseLocation()
 {
@@ -2043,6 +2127,23 @@ bool CombatCommander::buildingRush() const
     }
 
     return false;
+}
+
+
+// calculate sneak positions
+SPosition CombatCommander::getSneakPath()
+{
+	SPosition sneak_dest_position;
+	BWAPI::Position start_position = InformationManager::Instance().getMyMainBaseLocation()->getPosition();
+	BWAPI::Position dest_position = InformationManager::Instance().getEnemyMainBaseLocation()->getPosition();
+	//Log::Log().Get() << "sneak path here" << std::endl;
+	std::vector<const BWAPI::Position> sneak_positions = PathFinding::GetChokePointPathFarthest(start_position, dest_position);
+	//BWAPI::Position pos(BWAPI::TilePosition(50, 50));
+	for (BWAPI::Position pos : sneak_positions)
+	{
+		sneak_dest_position.push_back(pos);
+	}
+	return sneak_dest_position;
 }
 
 CombatCommander & CombatCommander::Instance()

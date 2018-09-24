@@ -1885,6 +1885,12 @@ bool StrategyManager::dropIsPlanned() const
 		Config::Macro::ExpandToIslands && MapTools::Instance().hasIslandBases();
 }
 
+// Do we expect or plan to sneak enemy base
+bool StrategyManager::sneakIsPlanned() const
+{
+	return true;
+}
+
 // Whether we have the tech and transport to drop.
 bool StrategyManager::hasDropTech()
 {

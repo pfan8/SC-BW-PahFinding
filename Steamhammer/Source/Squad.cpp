@@ -80,6 +80,12 @@ void Squad::update()
 		// And fall through to let the rest of the drop squad attack.
 	}
 
+	if (_order.getType() == SquadOrderTypes::SneakAttack)
+	{
+		detour();
+		return;
+	}
+
 	bool needToRegroup = needsToRegroup();
     
 	if (Config::Debug::DrawSquadInfo && _order.isRegroupableOrder()) 
@@ -703,6 +709,28 @@ void Squad::loadTransport()
 				break;
 			}
 		}
+	}
+}
+
+void Squad::detour()
+{
+	double average_dist = 0.0;
+	for (const auto sneaker : _units)
+	{
+		//BWAPI::Position pos(BWAPI::TilePosition(50,50));
+		if (sneaker->exists())
+		{
+			auto pos = _order.getSneakPosition();
+			Micro::Move(sneaker, pos);
+			average_dist += sneaker->getDistance(pos);
+			//Micro::Move(sneaker, pos);
+		}
+	}
+	average_dist /= _units.size();
+	if (average_dist < 10)
+	{
+		Log::Log().Get() << "sneak path here5" << std::endl;
+		_order.runNextSneakPos();
 	}
 }
 

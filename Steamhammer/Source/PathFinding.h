@@ -39,6 +39,8 @@ namespace PathFinding
         int minChokeWidth = 0,
         int desiredChokeWidth = 0);
 
+	std::vector<const BWAPI::Position> GetChokePointPathFarthest(BWAPI::Position start, BWAPI::Position target);
+
     // Get a tile near the given tile that is suitable for pathfinding from or to.
     BWAPI::TilePosition NearbyPathfindingTile(BWAPI::TilePosition tile);
 };
