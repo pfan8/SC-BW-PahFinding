@@ -59,7 +59,7 @@ class CombatCommander
 	BWAPI::Position getAttackLocation(const Squad * squad);
 	BWAPI::Position getDropLocation(const Squad & squad);
 	BWAPI::Position getSneakLocation(const Squad & squad);
-	SPosition		getSneakPath();
+	SPosition getSneakPath(BWAPI::Position target);
 	BWAPI::Position	getDefenseLocation();
 
     void            initializeSquads();
@@ -111,6 +111,7 @@ public:
 	void drawSquadInformation(int x, int y);
 
     SquadData& getSquadData() { return _squadData; };
+
 
 	static CombatCommander & Instance();
 };

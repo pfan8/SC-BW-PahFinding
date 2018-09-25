@@ -726,8 +726,12 @@ void Squad::detour()
 			//Micro::Move(sneaker, pos);
 		}
 	}
-	average_dist /= _units.size();
-	if (average_dist < 10)
+	if (average_dist != 0)
+	{
+		average_dist /= _units.size();
+	}
+	Log::Log().Get() << "sneak path here4: " << average_dist << std::endl;
+	if (average_dist < 100)
 	{
 		Log::Log().Get() << "sneak path here5" << std::endl;
 		_order.runNextSneakPos();

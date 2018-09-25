@@ -975,7 +975,7 @@ void CombatCommander::updateSneakSquads()
 	if (unitExists && sneaksRemaining <= 0)
 	{
 		SquadOrder sneakOrder = SquadOrder(SquadOrderTypes::SneakAttack, getSneakLocation(sneakSquad), 300, "Go sneak!");
-		sneakOrder.setSneakPostions(getSneakPath());
+		sneakOrder.setSneakPostions(getSneakPath(sneakOrder.getPosition()));
 		sneakSquad.setSquadOrder(sneakOrder);
 	}
 	else
@@ -2131,11 +2131,12 @@ bool CombatCommander::buildingRush() const
 
 
 // calculate sneak positions
-SPosition CombatCommander::getSneakPath()
+SPosition CombatCommander::getSneakPath(BWAPI::Position target)
 {
 	SPosition sneak_dest_position;
 	BWAPI::Position start_position = InformationManager::Instance().getMyMainBaseLocation()->getPosition();
-	BWAPI::Position dest_position = InformationManager::Instance().getEnemyMainBaseLocation()->getPosition();
+	BWAPI::Position dest_position = target;
+	//if (bwebMap.getGroundDistance(start_position,dest_position)) return;
 	//Log::Log().Get() << "sneak path here" << std::endl;
 	std::vector<const BWAPI::Position> sneak_positions = PathFinding::GetChokePointPathFarthest(start_position, dest_position);
 	//BWAPI::Position pos(BWAPI::TilePosition(50, 50));

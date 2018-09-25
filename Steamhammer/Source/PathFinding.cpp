@@ -151,19 +151,20 @@ std::vector<const BWAPI::Position> UAlbertaBot::PathFinding::GetChokePointPathFa
 	double mapHeight = bwemMap.Size().y;
 	double hdist = std::abs(start.x - target.x);
 	double vdist = std::abs(start.y - target.y);
-	const std::set<BWTA::Chokepoint*>& cPoints = BWTA::getChokepoints();
+	const std::set<BWTA::Chokepoint *>& cPoints = BWTA::getChokepoints();
 	// choose the direction to go
+	const BWEM::Area * start_area = bwemMap.GetArea(BWAPI::TilePosition(start));
+	bwem_assert(start_area != nullptr);
+	BWTA::Chokepoint * target_choke;
+	int min_distance = 1 << 30;
 	if (vdist < hdist)
 	{
-		const BWEM::Area * start_area = bwemMap.GetArea(BWAPI::TilePosition(start));
-		bwem_assert(start_area != nullptr);
 		double end_y = (target.y - 0 > mapHeight - target.y) ? 0. : mapHeight;
 		BWAPI::Position vend_position(target.x, end_y);
-		double min_distance = GetGroundDistance(target, vend_position);
-		BWTA::Chokepoint * target_choke;
 		for (BWTA::Chokepoint * choke : cPoints)
 		{
-			double distance = GetGroundDistance(choke->getCenter(), vend_position);
+			int distance = GetGroundDistance(choke->getCenter(), vend_position);
+			if (distance == -1) continue;
 			if (distance < min_distance)
 			{
 				target_choke = choke;
@@ -174,15 +175,12 @@ std::vector<const BWAPI::Position> UAlbertaBot::PathFinding::GetChokePointPathFa
 	}
 	else
 	{
-		const BWEM::Area * start_area = bwemMap.GetArea(BWAPI::TilePosition(start));
-		bwem_assert(start_area != nullptr);
 		double end_x = (target.x - 0 > mapWidth - target.x) ? 0. : mapWidth;
 		BWAPI::Position hend_position(end_x, target.y);
-		double min_distance = GetGroundDistance(target, hend_position);
-		BWTA::Chokepoint * target_choke;
 		for (BWTA::Chokepoint * choke : cPoints)
 		{
 			double distance = GetGroundDistance(choke->getCenter(), hend_position);
+			if (distance == -1) continue;
 			if (distance < min_distance)
 			{
 				target_choke = choke;
@@ -191,7 +189,6 @@ std::vector<const BWAPI::Position> UAlbertaBot::PathFinding::GetChokePointPathFa
 		}
 		result_path.push_back(target_choke->getCenter());
 	}
-	//Log::Log().Get() << "sneak path here4" << std::endl;
 	result_path.push_back(target);
 	return result_path;
 }
