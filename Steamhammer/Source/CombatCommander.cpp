@@ -964,7 +964,6 @@ void CombatCommander::updateSneakSquads()
 			}
 		}
 	}
-	bool unitExists = true;
 	for (const auto unit : sneakGroup)
 	{
 		if (unit)
@@ -972,7 +971,7 @@ void CombatCommander::updateSneakSquads()
 			sneaksRemaining--;
 		}
 	}
-	if (unitExists && sneaksRemaining <= 0)
+	if (sneaksRemaining <= 0)
 	{
 		SquadOrder sneakOrder = SquadOrder(SquadOrderTypes::SneakAttack, getSneakLocation(sneakSquad), 300, "Go sneak!");
 		sneakOrder.setSneakPostions(getSneakPath(sneakOrder.getPosition()));
@@ -2138,7 +2137,7 @@ SPosition CombatCommander::getSneakPath(BWAPI::Position target)
 	BWAPI::Position dest_position = target;
 	//if (bwebMap.getGroundDistance(start_position,dest_position)) return;
 	//Log::Log().Get() << "sneak path here" << std::endl;
-	std::vector<const BWAPI::Position> sneak_positions = PathFinding::GetChokePointPathFarthest(start_position, dest_position);
+	std::vector<const BWAPI::Position> sneak_positions = PathFinding::GetPathAt45DegreeAngle(start_position, dest_position);
 	//BWAPI::Position pos(BWAPI::TilePosition(50, 50));
 	for (BWAPI::Position pos : sneak_positions)
 	{

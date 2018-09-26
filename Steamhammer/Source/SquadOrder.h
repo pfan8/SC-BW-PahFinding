@@ -30,6 +30,7 @@ class SquadOrder
     BWAPI::Position     _dest_position;
 	SPosition			_sneak_positions;
 	int					_current_sneak_index;
+	double				_last_distance;
     std::string         _status;
 
 public:
@@ -49,12 +50,23 @@ public:
 		if (type == SquadOrderTypes::SneakAttack)
 		{
 			_current_sneak_index = 0;
+			_last_distance = DBL_MAX;
 		}
 	}
 
 	void setSneakPostions(SPosition &sneak_positions)
 	{
 		_sneak_positions = sneak_positions;
+	}
+
+	void setLastDistance(double last_distance)
+	{
+		_last_distance = last_distance;
+	}
+
+	const double getLastDistance() const
+	{
+		return _last_distance;
 	}
 
 	const std::string & getStatus() const 
@@ -125,7 +137,13 @@ public:
 	{
 		if (_sneak_positions.size() == 0) return;
 		_current_sneak_index = _current_sneak_index >= _sneak_positions.size()-1 ? _sneak_positions.size()-1 : ++_current_sneak_index;
+		_last_distance = DBL_MAX;
 		//_current_sneak_index++;
+	}
+
+	bool reachSneakPosition()
+	{
+		return _current_sneak_index == _sneak_positions.size() - 1;
 	}
 
 };

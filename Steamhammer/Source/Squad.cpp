@@ -721,7 +721,10 @@ void Squad::detour()
 		if (sneaker->exists())
 		{
 			auto pos = _order.getSneakPosition();
-			Micro::Move(sneaker, pos);
+			if (_order.reachSneakPosition())
+				Micro::AttackMove(sneaker, pos);
+			else
+				Micro::Move(sneaker, pos);
 			average_dist += sneaker->getDistance(pos);
 			//Micro::Move(sneaker, pos);
 		}
@@ -731,10 +734,14 @@ void Squad::detour()
 		average_dist /= _units.size();
 	}
 	Log::Log().Get() << "sneak path here4: " << average_dist << std::endl;
-	if (average_dist < 100)
+	if (average_dist < 500)
 	{
 		Log::Log().Get() << "sneak path here5" << std::endl;
 		_order.runNextSneakPos();
+	}
+	else
+	{
+		_order.setLastDistance(average_dist);
 	}
 }
 

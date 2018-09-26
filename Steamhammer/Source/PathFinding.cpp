@@ -159,11 +159,11 @@ std::vector<const BWAPI::Position> UAlbertaBot::PathFinding::GetChokePointPathFa
 	int min_distance = 1 << 30;
 	if (vdist < hdist)
 	{
-		double end_y = (target.y - 0 > mapHeight - target.y) ? 0. : mapHeight;
-		BWAPI::Position vend_position(target.x, end_y);
+		double end_y = (start.y - 0 > mapHeight - start.y) ? 0. : mapHeight;
+		BWAPI::Position vend_position(start.x, end_y);
 		for (BWTA::Chokepoint * choke : cPoints)
 		{
-			int distance = GetGroundDistance(choke->getCenter(), vend_position);
+			int distance = choke->getCenter().getDistance(vend_position);
 			if (distance == -1) continue;
 			if (distance < min_distance)
 			{
@@ -175,11 +175,12 @@ std::vector<const BWAPI::Position> UAlbertaBot::PathFinding::GetChokePointPathFa
 	}
 	else
 	{
-		double end_x = (target.x - 0 > mapWidth - target.x) ? 0. : mapWidth;
-		BWAPI::Position hend_position(end_x, target.y);
+		double end_x = (start.x - 0 > mapWidth - start.x) ? 0. : mapWidth;
+		BWAPI::Position hend_position(end_x, start.y);
 		for (BWTA::Chokepoint * choke : cPoints)
 		{
-			double distance = GetGroundDistance(choke->getCenter(), hend_position);
+			double distance = choke->getCenter().getDistance(hend_position);
+			Log::Log().Get() << "sneak path here6: " << distance << std::endl;
 			if (distance == -1) continue;
 			if (distance < min_distance)
 			{
@@ -191,4 +192,52 @@ std::vector<const BWAPI::Position> UAlbertaBot::PathFinding::GetChokePointPathFa
 	}
 	result_path.push_back(target);
 	return result_path;
+}
+
+std::vector<const BWAPI::Position> UAlbertaBot::PathFinding::GetPathAt45DegreeAngle(BWAPI::Position start, BWAPI::Position target)
+{
+	std::vector<const BWAPI::Position> path;
+	double mapWidth = bwemMap.Size().x;
+	double mapHeight = bwemMap.Size().y;
+	// get base vectors
+	double bv1[2] = {target.x - start.x, target.y - start.y};
+	double bv2[2] = {bv1[1] == 0 ? 0 : 1/bv1[1],bv1[0] == 0 ? 0 : -1/bv1[0]};
+	double denom1 = std::sqrt(bv1[0] * bv1[0] + bv1[1] * bv1[1]);
+	double denom2 = std::sqrt(bv2[0] * bv2[0] + bv2[1] * bv2[1]);
+	bv1[0] = denom1 == 0 ? 0 : bv1[0] / denom1;
+	bv1[1] = denom1 == 0 ? 0 : bv1[1] / denom1;
+	bv2[0] = denom2 == 0 ? 0 : bv2[0] / denom2;
+	bv2[1] = denom2 == 0 ? 0 : bv2[1] / denom2;
+	// try go 10 x and 10 y for each step, and move only it is walkable
+	BWAPI::Position pos(start.x, start.y);
+	int i = 0;
+	while (pos.getApproxDistance(start) < 2000)
+	{
+		i++;
+		if (pos.x >= mapWidth - 5 || pos.x <= 5)
+		{
+			pos.x = pos.x <= 5 ? 5 : mapWidth - 5;
+			pos.y += (pos.y - 0 > mapHeight - pos.y) ? -10 : 10;
+		}
+		else if (pos.y >= mapHeight - 5 || pos.y <= 5)
+		{
+			pos.x += (pos.x - 0 > mapWidth - pos.x) ? -10 : 10;
+			pos.y = pos.y <= 5 ? 5 : mapHeight - 5;
+		}
+		else
+		{
+			// get cordinate of base vectors
+			double oc[2] = {i * 10, i * 10};
+			oc[0] = oc[0] * bv1[0] + oc[1] * bv2[0];
+			oc[1] = oc[0] * bv1[1] + oc[1] * bv2[1];
+			pos = BWAPI::Position((int)oc[0], (int)oc[1]);
+
+		}
+		if (BWAPI::Broodwar->isWalkable(pos.x, pos.y))
+		{
+			path.push_back(pos);
+		}
+	}
+	path.push_back(target);
+	return path;
 }
